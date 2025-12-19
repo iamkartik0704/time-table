@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Timetable Finder | IIT Patna</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --card-bg: #111111;
+            --accent: #d4af37; /* Metallic Gold */
+            --text-main: #ffffff;
+            --text-dim: #777777;
+            --border: #222222;
+            --hover-elevate: -8px;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 4rem 1rem 3rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 { margin: 0; font-size: 2.2rem; font-weight: 700; letter-spacing: -0.5px; }
+        h2 { margin: 10px 0 0; font-size: 0.9rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 3px; }
+
+        .main-content { flex: 1; padding: 40px 20px; }
+
+        .search-wrapper {
+            max-width: 650px; margin: 0 auto 60px;
+            position: relative;
+        }
+
+        .input-container {
+            background: var(--card-bg);
+            padding: 5px; border-radius: 14px;
+            display: flex; align-items: center;
+            border: 1px solid var(--border);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .input-container:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+        }
+
+        input {
+            flex: 1; background: transparent; border: none;
+            padding: 18px 25px; color: white; font-size: 1.1rem;
+            outline: none;
+        }
+
+        #suggestions {
+            position: absolute; top: 115%; left: 0; right: 0;
+            background: #0f0f0f; border-radius: 12px;
+            overflow: hidden; z-index: 1000; display: none;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+        }
+
+        .suggestion-item { 
+            padding: 18px 25px; cursor: pointer; 
+            transition: all 0.2s; border-bottom: 1px solid var(--border);
+        }
+        .suggestion-item:hover { background: #1a1a1a; color: var(--accent); }
+
+        .schedule-grid {
+            max-width: 900px; margin: 0 auto;
+            display: grid; gap: 30px;
+            padding-bottom: 100px;
+        }
+
+        /* Hover Pop-out Effect */
+        .day-card {
+            background: var(--card-bg); 
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        box-shadow 0.4s ease, 
+                        border-color 0.4s ease;
+        }
+
+        .day-card:hover {
+            transform: translateY(var(--hover-elevate)) scale(1.02);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 175, 55, 0.1);
+            z-index: 10;
+        }
+
+        .day-header {
+            padding: 20px 30px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.01);
+        }
+
+        .day-header h3 { margin: 0; font-size: 1.1rem; color: var(--accent); font-weight: 700; text-transform: uppercase; }
+
+        .status-badge {
+            font-size: 0.7rem; padding: 6px 14px; border-radius: 5px;
+            background: #1a1a1a; color: var(--text-dim); font-weight: 800; letter-spacing: 1px;
+        }
+
+        /* Boxed Current Day Style */
+        .is-today { 
+            border: 2px solid var(--accent); 
+            background: rgba(212, 175, 55, 0.05); 
+            box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.1); 
+        }
+        .is-today .status-badge { background: var(--accent); color: #000; }
+
+        .class-row {
+            display: grid; grid-template-columns: 180px 1fr 150px;
+            padding: 20px 30px; align-items: center;
+            transition: background 0.3s ease;
+        }
+        
+        .class-row:hover { background: rgba(255,255,255,0.02); }
+        .class-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+
+        .time { font-weight: 600; color: #fff; font-size: 0.95rem; }
+        .course-name { color: #ccc; }
+        .room-tag { color: var(--accent); font-size: 0.85rem; text-align: right; font-weight: 600; }
+
+        /* Updated Footer */
+        footer {
+            margin-top: auto; padding: 50px; text-align: center;
+            color: var(--accent); 
+            font-size: 1rem; border-top: 1px solid var(--border);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .class-row { grid-template-columns: 1fr; gap: 12px; padding: 25px; }
+            .room-tag { text-align: left; }
+            .day-card:hover { transform: scale(1.01); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Student Timetable Finder</h1>
+    <h2>IIT Patna</h2>
+</header>
+
+<div class="main-content">
+    <div class="search-wrapper">
+        <div class="input-container">
+            <input type="text" id="nameSearch" placeholder="Search your name..." autocomplete="off" oninput="handleTyping(this.value)">
+        </div>
+        <div id="suggestions"></div>
+    </div>
+    <div id="output" class="schedule-grid"></div>
+</div>
+
+<footer>Made with ❤️ by π</footer>
+
+<script>
+    let students = [];
+    let scheduleData = {};
+
+    window.onload = async () => {
+        try {
+            const [sRes, tRes] = await Promise.all([
+                fetch('final_students.json'),
+                fetch('final_timetable.json')
+            ]);
+            students = await sRes.json();
+            scheduleData = await tRes.json();
+        } catch (e) { console.error("Could not load JSON files."); }
+    };
+
+    function handleTyping(val) {
+        const suggBox = document.getElementById('suggestions');
+        if (val.length < 2) { suggBox.style.display = 'none'; return; }
+        const filtered = students.filter(s => s.name.toLowerCase().includes(val.toLowerCase())).slice(0, 6);
+        if (filtered.length > 0) {
+            suggBox.innerHTML = filtered.map(s => `
+                <div class="suggestion-item" onclick="renderSchedule('${s.name}', '${s.group}')">
+                    ${s.name} <small style="display:block; color:#777; font-size:0.8rem; margin-top:4px;">Roll: ${s.roll_number} • Group: ${s.group}</small>
+                </div>`).join('');
+            suggBox.style.display = 'block';
+        } else { suggBox.style.display = 'none'; }
+    }
+
+    function renderSchedule(name, group) {
+        document.getElementById('nameSearch').value = name;
+        document.getElementById('suggestions').style.display = 'none';
+        const output = document.getElementById('output');
+        const timetable = scheduleData[group];
+        const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+        const today = new Intl.DateTimeFormat('en-US', {weekday: 'long'}).format(new Date());
+
+        let html = `
+            <div style="text-align:center; margin-bottom:50px;">
+                <h3 style="color:white; font-size:1.6rem; margin:0;">${name}</h3>
+                <p style="color:var(--accent); font-size:0.9rem; margin-top:8px;">Academic Group: ${group}</p>
+            </div>`;
+
+        weekdays.forEach(day => {
+            const isToday = (day === today);
+            const classes = timetable.filter(c => c.day === day);
+            html += `
+                <div class="day-card ${isToday ? 'is-today' : ''}" id="${day}">
+                    <div class="day-header">
+                        <h3>${day}</h3>
+                        <span class="status-badge">${isToday ? 'TODAY' : 'WEEKDAY'}</span>
+                    </div>
+                    <div>
+                        ${classes.length > 0 ? classes.map(c => `
+                            <div class="class-row">
+                                <span class="time">${c.time}</span>
+                                <span class="course-name">${c.course}</span>
+                                <span class="room-tag">📍 ${c.room}</span>
+                            </div>`).join('') : '<div style="padding:40px; color:#333; text-align:center;">No lectures today.</div>'}
+                    </div>
+                </div>`;
+        });
+        output.innerHTML = html;
+
+        setTimeout(() => {
+            const todayCard = document.getElementById(today);
+            if (todayCard) todayCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
+    }
+</script>
+</body>
+</html>
